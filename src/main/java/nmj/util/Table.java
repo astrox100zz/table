@@ -24,7 +24,7 @@ public final class Table<T> implements Iterable<T> {
                     Object.class, Object.class, Class.class, String[].class);
             SPRING_COPY_METHOD.setAccessible(true);
         } catch (Throwable t) {
-            System.out.println("class org.springframework.beans.BeanUtils not found! nmj.Table.mapList(java.lang.Class<E>, java.lang.String...) not be working");
+            System.err.println("class org.springframework.beans.BeanUtils not found! nmj.Table.mapList(java.lang.Class<E>, java.lang.String...) not be working");
         }
     }
 
@@ -96,21 +96,6 @@ public final class Table<T> implements Iterable<T> {
             ofClass(data, clazz, element, visitedElements);
         }
         return new Table<>(data);
-    }
-
-    private static <T> void ofClass(List<T> data, Class<T> clazz, Object element, Set<Object> visitedElements) {
-        if (element == null || visitedElements.contains(element)) {
-            return;
-        }
-        visitedElements.add(element);
-        if (clazz.isAssignableFrom(element.getClass())) {
-            data.add((T) element);
-        }
-        if (element instanceof Iterable) {
-            for (Object e : ((Iterable) element)) {
-                ofClass(data, clazz, e, visitedElements);
-            }
-        }
     }
 
     public Table<T> concat(Table<T> newTable) {
@@ -505,29 +490,7 @@ public final class Table<T> implements Iterable<T> {
     }
 
     public <E> Table<E> flatMap(int groupSize, Function<Table<T>, Iterable<E>> function) {
-        if (groupSize < 1) {
-            throw new IllegalArgumentException();
-        }
-        List<E> list = new ArrayList<>();
-        List<T> group = new ArrayList<>(groupSize);
-        for (T t : this) {
-            group.add(t);
-            if (group.size() >= groupSize) {
-                Iterable<E> ie = function.apply(of(group));
-                group.clear();
-                for (E e : of(ie)) {
-                    list.add(e);
-                }
-            }
-        }
-        if (!group.isEmpty()) {
-            Iterable<E> ie = function.apply(of(group));
-            group.clear();
-            for (E e : of(ie)) {
-                list.add(e);
-            }
-        }
-        return of(list);
+        return of(flatMapList(groupSize, function));
     }
 
     public List<T> list(Predicate<T> predicate) {
@@ -598,7 +561,7 @@ public final class Table<T> implements Iterable<T> {
     }
 
     public <E> List<E> flatMapList(Function<T, Iterable<E>> function) {
-        List<E> list = new ArrayList<>(estimateSize() * 4);
+        List<E> list = new ArrayList<>(estimateSize() * 8);
         for (T t : this) {
             Iterable<E> ie = function.apply(t);
             if (ie != null) {
@@ -616,7 +579,7 @@ public final class Table<T> implements Iterable<T> {
         if (groupSize < 1) {
             throw new IllegalArgumentException();
         }
-        List<E> list = new ArrayList<>();
+        List<E> list = new ArrayList<>(estimateSize() * 8);
         List<T> group = new ArrayList<>(groupSize);
         for (T t : this) {
             group.add(t);
@@ -639,7 +602,7 @@ public final class Table<T> implements Iterable<T> {
     }
 
     public <E> Set<E> flatMapSet(Function<T, Iterable<E>> function) {
-        Set<E> set = new LinkedHashSet<>(estimateSize() * 4);
+        Set<E> set = new LinkedHashSet<>(estimateSize() * 8);
         for (T t : this) {
             Iterable<E> ie = function.apply(t);
             if (ie != null) {
@@ -701,7 +664,7 @@ public final class Table<T> implements Iterable<T> {
         return join(128, null, delimiters, null, Objects::toString);
     }
 
-    public <E> Map<E, Table<T>> groupBy(Function<T, E> function, boolean removeNullKey) {
+    public <E> Map<E, Table<T>> groupBy(boolean removeNullKey, Function<T, E> function) {
         Map<E, List<T>> map = new LinkedHashMap<>(estimateSize() * 2);
         for (T t : this) {
             E e = function.apply(t);
@@ -723,7 +686,7 @@ public final class Table<T> implements Iterable<T> {
         return group;
     }
 
-    public <E> Map<E, List<T>> groupByAsList(Function<T, E> function, boolean removeNullKey) {
+    public <E> Map<E, List<T>> groupByAsList(boolean removeNullKey, Function<T, E> function) {
         Map<E, List<T>> map = new LinkedHashMap<>(estimateSize() * 2);
         for (T t : this) {
             E e = function.apply(t);
@@ -1059,6 +1022,21 @@ public final class Table<T> implements Iterable<T> {
         public StringNode(T data, String value) {
             this.data = data;
             this.value = value;
+        }
+    }
+
+    private static <T> void ofClass(List<T> data, Class<T> clazz, Object element, Set<Object> visitedElements) {
+        if (element == null || visitedElements.contains(element)) {
+            return;
+        }
+        visitedElements.add(element);
+        if (clazz.isAssignableFrom(element.getClass())) {
+            data.add((T) element);
+        }
+        if (element instanceof Iterable) {
+            for (Object e : ((Iterable) element)) {
+                ofClass(data, clazz, e, visitedElements);
+            }
         }
     }
 
