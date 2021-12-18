@@ -205,9 +205,9 @@ public class MybatisSqlPrinter implements Interceptor {
         boolean isCount = (result instanceof Integer) && (SqlCommandType.SELECT != mappedStatement.getSqlCommandType());
         Logger logger = LoggerFactory.getLogger(mappedStatement.getId());
         if (isCount) {
-            logger.info("{} affect count {} method {}\n  /* MybatisSqlPrinter */ {}", constInfo, result, mappedStatement.getId(), sqlInfo.getSql());
+            logger.info("{}\n        MybatisSqlPrinter cost {} affect count {}\n        {}\n", mappedStatement.getId(), constInfo, result, sqlInfo.getSql());
         } else {
-            logger.info("{} method {}\n  /* MybatisSqlPrinter */ {}", constInfo, mappedStatement.getId(), sqlInfo.getSql());
+            logger.info("{}\n        MybatisSqlPrinter cost {} \n        {}\n", mappedStatement.getId(), constInfo, sqlInfo.getSql());
         }
     }
 
