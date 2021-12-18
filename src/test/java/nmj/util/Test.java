@@ -1,4 +1,4 @@
-package nmj;
+
 
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
@@ -203,10 +203,11 @@ public class MybatisSqlPrinter implements Interceptor {
         }
         MappedStatement mappedStatement = sqlInfo.getMappedStatement();
         boolean isCount = (result instanceof Integer) && (SqlCommandType.SELECT != mappedStatement.getSqlCommandType());
+        Logger logger = LoggerFactory.getLogger(mappedStatement.getId());
         if (isCount) {
-            log.info("{} affect count {} method {}\n{}", constInfo, result, mappedStatement.getId(), sqlInfo.getSql());
+            logger.info("{} affect count {} method {}\n  /* MybatisSqlPrinter */ {}", constInfo, result, mappedStatement.getId(), sqlInfo.getSql());
         } else {
-            log.info("{} method {}\n{}", constInfo, mappedStatement.getId(), sqlInfo.getSql());
+            logger.info("{} method {}\n  /* MybatisSqlPrinter */ {}", constInfo, mappedStatement.getId(), sqlInfo.getSql());
         }
     }
 
@@ -246,6 +247,8 @@ public class MybatisSqlPrinter implements Interceptor {
                 result = "NULL";
             } else if (value instanceof Date) {
                 result = "'" + DATE_TIME_FORMATTER.format(LocalDateTime.now()) + "'";
+            } else if (value instanceof String) {
+                result = "'" + value + "'";
             } else {
                 result = value + "";
             }
