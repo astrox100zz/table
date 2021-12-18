@@ -123,6 +123,11 @@ public final class Table<T> implements Iterable<T> {
         return concat(newTable);
     }
 
+    public Table<T> concatOfClass(Class<T> clazz, Object... elements) {
+        Table<T> newTable = ofClass(clazz, elements);
+        return concat(newTable);
+    }
+
     public boolean nonEmpty() {
         return this.iterator().hasNext();
     }
